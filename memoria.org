@@ -1,0 +1,161 @@
+#+TITLE: Código de Huffman
+#+PROPERTY: header-args+ :session :tangle bin/huffman-compression.py
+#+DESCRIPTION: Memoria de la Practica 2 de Geometría Computacional.
+#+AUTHOR: Pablo C. Alcalde
+* Introduccion
+  Un código de Huffman es un tipo particular de codigo usado comunmente para compresión sin pérdida de datos. Es un código en el que los símbolos más utilizados de les asocia un código más corto, de manera que los prefijos sean únicos.
+  De tal modo, aún siendo códigos de longitud variable, se mantiene la posibilidad de marcar unequivocamente la terminación del código asociado a cada uno de los caracteres.
+  De entre los códigos que codifican símbolos independientemente, este se considera óptimo.
+  Seguir el siguiente [[https://es.wikipedia.org/wiki/Codificaci%C3%B3n_Huffman][link]] para más información o el siguiente [[https://www.youtube.com/watch?v=0kNXhFIEd_w][vídeo(en inglés)]] para ver una explicación e implementación del mismo.
+* Objetivos
+** [[Hayar el código de Huffman binario de S_{Eng} y S_{Esp}, sus longitudes medias L(S_{Eng}) y L(S_{Esp}), y comprueba que se satisface el Primer Teorema de Shannon.][Hayar el código de Huffman binario de S_{Eng} y S_{Esp}, sus longitudes medias L(S_{Eng}) y L(S_{Esp}), y comprueba que se satisface el Primer Teorema de Shannon.]]
+** [[Codificar con dicho código la palabra cognada X = /"medieval"/ para ambas lenguas, y comprobar la eficiencia de longitud comparada con el código binario usual.][Codificar con dicho código la palabra cognada X = /"medieval"/ para ambas lenguas, y comprobar la eficiencia de longitud comparada con el código binario usual.]]
+** [[Decodifica la siguiente palabra del inglés \newline /"10111101101110110111011111"/.][Decodifica la siguiente palabra del inglés \newline /"10111101101110110111011111"/.]]
+* Método y Dátos
+** Hayar el código de Huffman binario de S_{Eng} y S_{Esp}, sus longitudes medias L(S_{Eng}) y L(S_{Esp}), y comprueba que se satisface el Primer Teorema de Shannon.
+   Se adjunta en el 
+** Codificar con dicho código la palabra cognada X = /"medieval"/ para ambas lenguas, y comprobar la eficiencia de longitud comparada con el código binario usual.
+   Apartado 2
+** Decodifica la siguiente palabra del inglés \newline /"10111101101110110111011111"/.
+   Apartado 3
+#+LaTeX: \appendix
+* Implementación en Python
+** Librerias Usadas
+   - Para obtener la tabla de frecuencias del archivo utilizaremos /Counter/ de la librería /collections/.
+   - Usamos la librería /functools/ para facilitarnos la implementación de relaciones de orden en nuestras clases.
+   - Para conseguir una construcción eficiente de nuestro [[Árbol de Huffman][árbol de Huffman]] usaremos la /PriorityQueue/ de la librería /queue/ de python.
+   - Finalmente importaremos las funciones matemáticas necesarias de /math/.
+   
+   #+ATTR_LATEX: :options frame=single, backgroundcolor=\color{lightgray}
+   #+begin_src python
+     from collections import Counter #Counter
+     from functools import total_ordering 
+     from queue import PriorityQueue
+     from math import log2
+   #+end_src
+** Clases Auxiliares
+   - Como vamos a utilizar la implementación de colas de prioridad suplementada por la librería *queue* de python con [[Árbol de Huffman][árboles de Huffman]] como miembros necesitaremos implementar una relación de orden para estos.
+
+   - Al ser los [[Árbol de Huffman][árboles de Huffman]] una estructura ordenada conteniendo [[Nodo de Huffman][nodos de Huffman]], se incluye una relación de orden para estos también. Por comodidad se añade un método para iterar en preorden.
+  #+LaTeX: \newpage
+*** Árbol de Huffman
+    #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+    #+begin_src python
+      @total_ordering
+      class HT:
+	  def __init__(self, *args):
+	      if len(args) == 1:
+		  value = args[0]
+		  self.depth = 0
+		  self.value = value
+		  self.children = []
+	      else:
+		  lnode = args[0]
+		  rnode = args[1]
+		  self.depth = max(lnode.depth, rnode.depth) + 1
+		  self.value = lnode.value + rnode.value
+		  self.children = [lnode, rnode]
+
+	  def __add__(self, other):
+	      return HT(self,other)
+
+	  def __iter__(self):
+	      for v in chain(*imap(iter, self.children)):
+		  yield v
+	      yield self.value
+
+	  def get_value(self):
+	      return self.value
+
+	  def is_leaf(self):
+	      return (self.depth == 0)
+
+	  def __eq__(self, other):
+	      return (self.value == other.value)
+
+	  def __lt__(self, other):
+	      return (self.value < other.value)
+
+	  def __str__(self):
+	      return str(self.value)
+    #+end_src
+*** Nodo de Huffman
+    #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+    #+begin_src python
+      @total_ordering
+      class HTnode:
+	  def __init__(self, value, frequency):
+	      self.value = value
+	      self.frequency = frequency
+
+	  def __eq__(self, other):
+	      return self.frequency == other.frequency
+
+	  def __lt__(self, other):
+	      return self.frequency < other.frequency
+
+	  def __add__(self, other):
+	      new_tree = "[" + self.value + ", " + other.value + "]"
+	      new_frequency = self.frequency + other.frequency
+	      return HTnode(new_tree, new_frequency)
+
+	  def __str__(self):
+	      str_repr = "[" + self.value + \
+		  "->" + str(self.frequency) + "]"
+	      return str_repr
+    #+end_src
+** Funciones Auxiliares
+*** Creación del Arbol de Huffman
+    - Puesto que /Counter/ nos devuelve un diccionarío de pares caracter-frecuencia, implementamos una función para obtener de ahí una cola de prioridad que contenga [[Árbol de Huffman][arboles de Huffman]] de un solo nodo.
+    #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+    #+begin_src python
+      def FTtoPQ(ftab):
+	  pq = PriorityQueue()
+	  for char, frequency in ftab.items():
+	      pq.put(HT(HTnode(char, frequency)))
+	  return pq
+    #+end_src
+    - De ahí aplicaremos el algoritmo de creación dado por David Huffman para obtener el árbol que contenga los códigos óptimos.
+    #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+    #+begin_src python
+      def PQtoHT(q):
+	  while q.qsize() >= 2:
+	      elem1 = q.get()
+	      elem2 = q.get()
+	      q.put(HT(elem1, elem2))
+	  return q.get()
+    #+end_src
+*** Obtención de Códigos
+    Recorremos el árbol óptimo generando los códigos de manera recursiva.
+    #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+    #+begin_src python
+      def getCodes(ht):
+	  d = {}
+	  getCodesRec(ht, d)
+	  return d
+
+      def getCodesRec(ht, codes, prefix = ""):
+	  if ht.depth == 0:
+	      codes[ht.value.value] = prefix
+	  else:
+	      getCodesRec(ht.children[0], codes, prefix + "0")
+	      getCodesRec(ht.children[1], codes, prefix + "1")
+    #+end_src
+*** Decodificación
+    Decodificamos bit a bit recorriendo el arbol hasta llegar a una hoja, momento en el cual guardamos el caracter correspondiente y volvemos a la raiz del arbol.
+    #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+    #+begin_src python
+      def decode(s, ht):
+	  decodedString = ''
+	  rootNode = ht
+	  currentNode = ht
+	  for c in s:
+	      while not currentNode.is_leaf():
+		  if c == '0':
+		      currentNode = currentNode.children[0]
+		  if c == '1':
+		      currentNode = currentNode.children[1]
+	      decodedString.append(currentNode.value.value)
+	      currentNode = rootNode
+	  return decodedString
+    #+end_src
