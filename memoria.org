@@ -1,5 +1,5 @@
 #+TITLE: Código de Huffman
-#+PROPERTY: header-args+ :session :tangle bin/huffman-compression.py
+#+PROPERTY: header-args+ :session :tangle script.py
 #+DESCRIPTION: Memoria de la Practica 2 de Geometría Computacional.
 #+AUTHOR: Pablo C. Alcalde
 * Introduccion
@@ -7,23 +7,120 @@
   De tal modo, aún siendo códigos de longitud variable, se mantiene la posibilidad de marcar unequivocamente la terminación del código asociado a cada uno de los caracteres.
   De entre los códigos que codifican símbolos independientemente, este se considera óptimo.
   Seguir el siguiente [[https://es.wikipedia.org/wiki/Codificaci%C3%B3n_Huffman][link]] para más información o el siguiente [[https://www.youtube.com/watch?v=0kNXhFIEd_w][vídeo(en inglés)]] para ver una explicación e implementación del mismo.
-* Objetivos
-** [[Hayar el código de Huffman binario de S_{Eng} y S_{Esp}, sus longitudes medias L(S_{Eng}) y L(S_{Esp}), y comprueba que se satisface el Primer Teorema de Shannon.][Hayar el código de Huffman binario de S_{Eng} y S_{Esp}, sus longitudes medias L(S_{Eng}) y L(S_{Esp}), y comprueba que se satisface el Primer Teorema de Shannon.]]
-** [[Codificar con dicho código la palabra cognada X = /"medieval"/ para ambas lenguas, y comprobar la eficiencia de longitud comparada con el código binario usual.][Codificar con dicho código la palabra cognada X = /"medieval"/ para ambas lenguas, y comprobar la eficiencia de longitud comparada con el código binario usual.]]
-** [[Decodifica la siguiente palabra del inglés \newline /"10111101101110110111011111"/.][Decodifica la siguiente palabra del inglés \newline /"10111101101110110111011111"/.]]
+
 * Método y Dátos
 ** Hayar el código de Huffman binario de S_{Eng} y S_{Esp}, sus longitudes medias L(S_{Eng}) y L(S_{Esp}), y comprueba que se satisface el Primer Teorema de Shannon.
-   Se adjunta en el 
+   Del código anexado obtenemos la siguiente tabla.
+#+ATTR_LATEX: :environment longtable
+| Char |   Code_{Esp} |    Code_{Eng} |
+|------+-----------+------------|
+| 't'  |      0000 |        011 |
+| ' '  |    000100 |    1001101 |
+| 'j'  |    000101 |          - |
+| 'C'  | 000110000 |  100111101 |
+| 'y'  | 000110001 |   10011000 |
+| ';'  | 000110010 | 1111001111 |
+| 'D'  | 000110011 |          - |
+| 'ñ'  |  00011010 |          - |
+| 'w'  |  00011011 |      11000 |
+| 'h'  |    000111 |        101 |
+| 'a'  |       001 |      11010 |
+| 'e'  |       010 |       1110 |
+| 'o'  |      0110 |      11111 |
+| 'é'  |    011100 |          - |
+| 'v'  |  01110100 |   11110010 |
+| 'A'  | 011101010 | 1111001100 |
+| 'B'  | 011101011 |   11011001 |
+| 'Q'  |  01110110 |          - |
+| 'T'  | 011101110 |  100110010 |
+| 'á'  | 011101111 |          - |
+| 'c'  |    011110 |      10000 |
+| 'S'  |   0111110 |    1001110 |
+| 'z'  |   0111111 |          - |
+| 'n'  |      1000 |     110111 |
+| 's'  |      1001 |       0101 |
+| 'p'  |     10100 | 1111001110 |
+| 'l'  |     10101 |    1111000 |
+| 'P'  |  10110000 |          - |
+| '-'  |  10110001 |    0100111 |
+| '\n' |  10110010 |    0100100 |
+| '?'  |  10110011 |   11011000 |
+| 'q'  |   1011010 |  100111100 |
+| '¿'  |  10110110 |          - |
+| 'g'  |  10110111 |      10010 |
+| 'u'  |     10111 |      11001 |
+| 'b'  |    110000 |   01001011 |
+| 'm'  |    110001 | 1111001101 |
+| 'i'  |     11001 |      10001 |
+| 'r'  |     11010 |    1101101 |
+| 'd'  |    110110 |    1111011 |
+| '.'  |   1101110 |    1111010 |
+| 'í'  |  11011110 |          - |
+| 'Y'  | 110111110 |          - |
+| 'E'  | 110111111 |          - |
+| ' '  |       111 |         00 |
+| ' '  |       111 |         00 |
+| 'I'  |         - |      01000 |
+| '\n' |  10110010 |    0100100 |
+| 'f'  |         - |   01001010 |
+| 'b'  |    110000 |   01001011 |
+| '’'  |         - |    0100110 |
+| '-'  |  10110001 |    0100111 |
+| 's'  |      1001 |       0101 |
+| 't'  |      0000 |        011 |
+| 'c'  |    011110 |      10000 |
+| 'i'  |     11001 |      10001 |
+| 'g'  |  10110111 |      10010 |
+| 'y'  | 000110001 |   10011000 |
+| 'T'  | 011101110 |  100110010 |
+| 'k'  |         - |  100110011 |
+| '    |         ' |     000100 |
+| 'S'  |   0111110 |    1001110 |
+| 'q'  |   1011010 |  100111100 |
+| 'C'  | 000110000 |  100111101 |
+| 'W'  |         - |   10011111 |
+| 'h'  |    000111 |        101 |
+| 'w'  |  00011011 |      11000 |
+| 'u'  |     10111 |      11001 |
+| 'a'  |       001 |      11010 |
+| '?'  |  10110011 |   11011000 |
+| 'B'  | 011101011 |   11011001 |
+| 'r'  |     11010 |    1101101 |
+| 'n'  |      1000 |     110111 |
+| 'e'  |       010 |       1110 |
+| 'l'  |     10101 |    1111000 |
+| 'v'  |  01110100 |   11110010 |
+| 'A'  | 011101010 | 1111001100 |
+| 'm'  |    110001 | 1111001101 |
+| 'p'  |     10100 | 1111001110 |
+| ';'  | 000110010 | 1111001111 |
+| '.'  |   1101110 |    1111010 |
+| 'd'  |    110110 |    1111011 |
+| 'o'  |      0110 |      11111 |
+
+   - La longitud media L_{Esp} es 4.431924882629108 y la entropia H_{Esp} es 4.394393861479968.
+     
+     Al respetarse que 3.3943938614799682 \le 4.431924882629108 \le 5.394393861479968 se cumple el primer teorema de Shannon para S_{Esp}.
+   
+   - La longitud media L_{Eng} es 4.158163265306122 y la entropia H_{Eng} es 4.117499394903036.
+
+     Al respetarse que 3.117499394903036 \le 4.158163265306122 \le 5.117499394903036 se cumple el primer teorema de Shannon para S_{Eng}.
+
 ** Codificar con dicho código la palabra cognada X = /"medieval"/ para ambas lenguas, y comprobar la eficiencia de longitud comparada con el código binario usual.
-   Apartado 2
+   - Compreso con S_{Esp} es /"110001010110110110010100111010000110101"/ por lo que sin comprimir es 164% mas largo.
+
+   - Compreso con S_{Eng} es /"11110011011110111101110001111011110010110101111000"/ por lo que sin comprimir es 128% mas largo.
+
 ** Decodifica la siguiente palabra del inglés \newline /"10111101101110110111011111"/.
-   Apartado 3
-#+LaTeX: \appendix
+   Obtenemos la palabra /hentth/ por que los arboles de Huffman NO son únicos y este apartado está mal planteado.
+
+#+LaTeX: \newpage \appendix
 * Implementación en Python
 ** Librerias Usadas
    - Para obtener la tabla de frecuencias del archivo utilizaremos /Counter/ de la librería /collections/.
    - Usamos la librería /functools/ para facilitarnos la implementación de relaciones de orden en nuestras clases.
    - Para conseguir una construcción eficiente de nuestro [[Árbol de Huffman][árbol de Huffman]] usaremos la /PriorityQueue/ de la librería /queue/ de python.
+   - Usaremos csv para obtener los codigos en una tabla.
    - Finalmente importaremos las funciones matemáticas necesarias de /math/.
    
    #+ATTR_LATEX: :options frame=single, backgroundcolor=\color{lightgray}
@@ -31,6 +128,7 @@
      from collections import Counter #Counter
      from functools import total_ordering 
      from queue import PriorityQueue
+     from csv import DictWriter, writeheader, writerow
      from math import log2
    #+end_src
 ** Clases Auxiliares
@@ -141,6 +239,29 @@
 	      getCodesRec(ht.children[0], codes, prefix + "0")
 	      getCodesRec(ht.children[1], codes, prefix + "1")
     #+end_src
+*** Teorema de Shannon
+    Comprobamos si los valores satisfacen el primer teorema de Shannon.
+    #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+    #+begin_src python
+      def satisfiesShannonFirstTheorem(H, L, output=True):
+	  if H - 1 <= L and L <= H + 1:
+	      if output:
+		  print(f"{H - 1} <= {L} <= {H + 1}")
+		  print("Se cumple el primer teorema de Shannon")
+	      return True
+	  else:
+	      return False
+    #+end_src
+*** Codificacion
+    Codificamos letra a letra buscandola en nuestra tabla de códigos.
+    #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+    #+begin_src python
+      def encode(string, code):
+	  encoded = ''
+	  for char in string:
+	      encoded += code[char]
+	  return encoded
+    #+end_src
 *** Decodificación
     Decodificamos bit a bit recorriendo el arbol hasta llegar a una hoja, momento en el cual guardamos el caracter correspondiente y volvemos a la raiz del arbol.
     #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
@@ -148,14 +269,100 @@
       def decode(s, ht):
 	  decodedString = ''
 	  rootNode = ht
-	  currentNode = ht
+	  n = ht
 	  for c in s:
-	      while not currentNode.is_leaf():
-		  if c == '0':
-		      currentNode = currentNode.children[0]
-		  if c == '1':
-		      currentNode = currentNode.children[1]
-	      decodedString.append(currentNode.value.value)
-	      currentNode = rootNode
+	      n = n.children[0] if c is '0' else n.children[1]
+	      if n.is_leaf():
+		  decodedString += n.value.value
+		  n = rootNode
 	  return decodedString
     #+end_src
+** Primer Apartado
+   #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+   #+begin_src python
+     def primerApartado(H_es, L_es, D_es, H_en, L_en, D_en):
+	 with open("codes_es.csv", 'w', encoding = "utf8") as codes:
+	     writer = csv.DictWriter(codes,
+				     fieldnames = ["char", "code"])
+	     writer.writeheader()
+	     writer.writerows(D_es)
+        
+	 print(f"La longitud media L_esp es {L_es}")
+	 print(f"La entropia H_esp es {H_es}")
+	 assert satisfiesShannonFirstTheorem(H_es, L_es)
+    
+	 with open("codes_en.csv", 'w', encoding = "utf8") as codes:
+	     writer = csv.DictWriter(codes,
+				     fieldnames = ["char", "code"])
+	     writer.writeheader()
+	     writer.writerows(D_en)
+
+	 print(f"La longitud media L_eng es {L_en}")
+	 print(f"La entropia H_eng es {H_en}")
+	 assert satisfiesShannonFirstTheorem(H_en, L_en)
+   #+end_src
+** Segundo Apartado
+   #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+   #+begin_src python
+     def segundoApartado(D_es, D_en): 
+	 X_en = ''
+	 X_es = ''
+	 palabra = 'medieval'
+	 for letter in palabra:
+	     X_en += D_en[letter]
+	     X_es += D_es[letter]
+        
+	 percent_es = int(len(palabra*8)/len(X_es)*100)
+	 print(f"\'{palabra}\' compreso con S_Esp es \'{X_es}\'")
+	 print(f"sin comprimir es {percent_es}% mas largo")
+
+	 percent_en = int(len(palabra*8)/len(X_en)*100)
+	 print(f"\'{palabra}\' compreso con S_Eng es \'{X_en}\'")
+	 print(f"sin comprimir es {percent_en}% mas largo")
+   #+end_src
+** Tercer Apartado
+   #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+   #+begin_src python
+     def tercerApartado(HT_en):
+	 encoded = "10111101101110110111011111"
+	 decoded = decode(encoded, HT_en)
+	 sol = f"{encoded} es {decoded}"\
+	     f"Los arboles de Huffman NO son únicos"\
+	     f"y este apartado está mal planteado."
+	 print(sol)
+   #+end_src
+** Main
+   #+ATTR_LATEX: :options frame=single,backgroundcolor=\color{lightgray}
+   #+begin_src python
+     filename_es = 'GCOM2022_pract2_auxiliar_esp.txt'
+     with open(filename_es, 'r', encoding = "utf8") as ifile:
+	 es = ifile.read()
+
+     tab_es = Counter(es)
+     HT_es = PQtoHT(FTtoPQ(tab_es))
+     D_es = getCodes(HT_es)
+     Les_i = [len(code) * tab_es[letter]
+	      for letter, code in D_es.items()]
+     L_es = sum(Les_i) / len(es)
+     Hes_i = [freq / len(es) * log2(freq / len(es))
+	      for freq in tab_es.values()]
+     H_es = -1 * sum(Hes_i)
+
+     filename_en = 'GCOM2022_pract2_auxiliar_eng.txt'
+     with open(filename_en, 'r', encoding = "utf8") as ifile:
+	 en = ifile.read()
+
+     tab_en = Counter(en)
+     HT_en = PQtoHT(FTtoPQ(tab_en))
+     D_en = getCodes(HT_en)
+     Len_i = [len(code) * tab_en[letter]
+	      for letter, code in D_en.items()]
+     L_en = sum(Len_i) / len(en)
+     Hen_i = [freq / len(en) * log2(freq / len(en))
+	      for freq in tab_en.values()]
+     H_en = -1 * sum(Hen_i)
+
+     primerApartado(H_es, L_es, D_es, H_en, L_en, D_en)
+     segundoApartado(D_es, D_en)
+     tercerApartado(HT_en)
+   #+end_src
